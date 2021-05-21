@@ -29,7 +29,7 @@ Mappings:
   SourceCode:
     General:
       S3Bucket: "solutions"
-      KeyPrefix: "digital-user-engagement-events-database/v1.0.0"
+      KeyPrefix: "digital-user-engagement-events-dashboard/v1.0.0"
 
   LambdaRuntime:
     Language:
@@ -46,7 +46,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW Email_draft_v4 AS
+            CREATE OR REPLACE VIEW email_events_draft_v1 AS
             SELECT
               event_type
               , from_unixtime((event_timestamp / 1000)) event_timestamp
@@ -77,7 +77,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW SMS_draft_v4 AS
+            CREATE OR REPLACE VIEW sms_events_draft_v1 AS
             SELECT
               event_type
             , from_unixtime((event_timestamp / 1000)) event_timestamp
@@ -112,7 +112,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW campaign_events_draft_v4 AS
+            CREATE OR REPLACE VIEW campaign_events_draft_v1 AS
             SELECT
             event_type
             , from_unixtime((event_timestamp / 1000)) event_timestamp
@@ -126,7 +126,7 @@ Resources:
             , ingest_timestamp
             FROM
               all_events
-            WHERE (event_type = '_campaign.send')
+            WHERE (event_type = '_campaign.%')
 
   EventTableJourneyNamedQuery:
     Type: AWS::Athena::NamedQuery
@@ -137,7 +137,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW journey_events_draft_v4 AS
+            CREATE OR REPLACE VIEW journey_events_draft_v1 AS
             SELECT
             event_type
             , from_unixtime((event_timestamp / 1000)) event_timestamp
@@ -153,7 +153,7 @@ Resources:
             , ingest_timestamp
             FROM
               all_events
-            WHERE (event_type = '_journey.send')  
+            WHERE (event_type = '_journey.%')  
             
   
   EventTableAllCustomNamedQuery:
@@ -165,7 +165,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW custom_events_draft_v4 AS
+            CREATE OR REPLACE VIEW custom_events_draft_v1 AS
             SELECT
             event_type
             , from_unixtime((event_timestamp / 1000)) event_timestamp

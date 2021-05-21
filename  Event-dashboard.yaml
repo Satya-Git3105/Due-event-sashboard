@@ -1,0 +1,298 @@
+# Event Dashboard solution on quicksight dashboard file
+#
+# template for Event Dashboard solution on quicksight dashboard. 
+# **DO NOT DELETE**
+#
+# author: satyaso@
+AWSTemplateFormatVersion: 2010-09-09
+Description: (V-01) - Event dashboard solution on the event database 
+
+Parameters:
+  EventAthenaDatabaseName:
+    Type: String
+    Description: Name of the Digital User Engagement Events Database in Amazon Athena
+    Default: "due_eventdb"
+  LambdaCodeBucketName:
+    Type: String
+    Description: Provide a name for the S3 bucket where the Lambda code will be hosted
+  S3DataLogBucket:
+    Type: String
+    Description: Provide a name for the S3 that was created during the Event database implementation
+
+Mappings:
+  MetricsMap:
+    Send-Data:
+      ID: SO0105
+      Version: "v1.0.0"
+      SendAnonymousData: "Yes" # change to 'No' if needed
+
+  SourceCode:
+    General:
+      S3Bucket: "solutions"
+      KeyPrefix: "digital-user-engagement-events-database/v1.0.0"
+
+  LambdaRuntime:
+    Language:
+      Python: python3.8
+
+Resources:
+
+  EventTableAllEmailNamedQuery:
+    Type: AWS::Athena::NamedQuery
+    DeletionPolicy: Delete
+    Properties:
+      Database: !Ref EventAthenaDatabaseName
+      Description: "Create the Email AllMail View"
+      QueryString:
+        !Sub
+          |
+            CREATE OR REPLACE VIEW Email_draft_v4 AS
+            SELECT
+              event_type
+              , from_unixtime((event_timestamp / 1000)) event_timestamp
+              , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
+              , application.app_id application_id
+              , client.client_id endpoint_id
+              , attributes['campaign_id'] pinpoint_campaign_id
+              , attributes['treament_id'] pinpoint_treatment_id
+              , awsaccountid aws_account_id
+              , facets.email_channel.mail_event.mail.message_id message_id
+              , from_unixtime((facets.email_channel.mail_event.mail.message_send_timestamp / 1000)) message_send_timestamp
+              , facets.email_channel.mail_event.mail.from_address from_address
+              , facets.email_channel.mail_event.mail.destination destination
+              , facets.email_channel.mail_event.mail.common_headers.subject as subject
+              , MAP_CONCAT(COALESCE(client_context.custom, CAST(JSON '{}' AS MAP(varchar,varchar))),  attributes) as message_tags
+              , ingest_timestamp
+            FROM
+              all_events
+             WHERE (event_type NOT LIKE '_email.%') 
+
+
+  EventTableAllSMSNamedQuery:
+    Type: AWS::Athena::NamedQuery
+    DeletionPolicy: Delete
+    Properties:
+      Database: !Ref EventAthenaDatabaseName
+      Description: "Create the Email All SMS View"
+      QueryString:
+        !Sub
+          |
+            CREATE OR REPLACE VIEW SMS_draft_v4 AS
+            SELECT
+              event_type
+            , from_unixtime((event_timestamp / 1000)) event_timestamp
+            , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
+            , application.app_id application_id
+            , client.client_id endpoint_id
+            , attributes['campaign_id'] pinpoint_campaign_id
+            , attributes['treament_id'] pinpoint_treatment_id
+            , awsaccountid aws_account_id
+            , attributes['sender_request_id'] as sender_request_id
+            , attributes['destination_phone_number'] as destination_phone_number
+            , attributes['record_status'] as record_status
+            , attributes['iso_country_code'] as iso_country_code
+            , attributes['number_of_message_parts'] as number_of_message_parts
+            , attributes['message_id'] as message_id
+            , attributes['message_type'] as message_type
+            , attributes['origination_phone_number'] as origination_phone_number
+            , metrics.price_in_millicents_usd as price_in_millicents_usd
+            , CAST(JSON_PARSE(attributes['customer_context']) AS MAP(VARCHAR, VARCHAR)) as message_tags
+            , ingest_timestamp
+            FROM
+              all_events
+            WHERE (event_type LIKE '_SMS.%') 
+
+            
+  EventTableAllCampaignNamedQuery:
+    Type: AWS::Athena::NamedQuery
+    DeletionPolicy: Delete
+    Properties:
+      Database: !Ref EventAthenaDatabaseName
+      Description: "Creates the Campaign events View"
+      QueryString:
+        !Sub
+          |
+            CREATE OR REPLACE VIEW campaign_events_draft_v4 AS
+            SELECT
+            event_type
+            , from_unixtime((event_timestamp / 1000)) event_timestamp
+            , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
+            , application.app_id application_id
+            , client.client_id endpoint_id
+            , attributes['campaign_id'] pinpoint_campaign_id
+            , attributes['treament_id'] pinpoint_treatment_id
+            , awsaccountid aws_account_id
+            , attributes as message_tags
+            , ingest_timestamp
+            FROM
+              all_events
+            WHERE (event_type = '_campaign.send')
+
+  EventTableJourneyNamedQuery:
+    Type: AWS::Athena::NamedQuery
+    DeletionPolicy: Delete
+    Properties:
+      Database: !Ref EventAthenaDatabaseName
+      Description: "Create all Journey View"
+      QueryString:
+        !Sub
+          |
+            CREATE OR REPLACE VIEW journey_events_draft_v4 AS
+            SELECT
+            event_type
+            , from_unixtime((event_timestamp / 1000)) event_timestamp
+            , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
+            , application.app_id application_id
+            , client.client_id endpoint_id
+            , attributes['journey_run_id'] journey_run_id
+            , attributes['journey_send_status'] journey_send_status
+            , attributes['journey_id'] journey_id
+            , attributes['journey_activity_id'] journey_activity_id
+            , awsaccountid aws_account_id
+            , MAP_CONCAT(COALESCE(client_context.custom, CAST(JSON '{}' AS MAP(varchar,varchar))),  attributes) as message_tags
+            , ingest_timestamp
+            FROM
+              all_events
+            WHERE (event_type = '_journey.send')  
+            
+  
+  EventTableAllCustomNamedQuery:
+    Type: AWS::Athena::NamedQuery
+    DeletionPolicy: Delete
+    Properties:
+      Database: !Ref EventAthenaDatabaseName
+      Description: "Create the Custom events View"
+      QueryString:
+        !Sub
+          |
+            CREATE OR REPLACE VIEW custom_events_draft_v4 AS
+            SELECT
+            event_type
+            , from_unixtime((event_timestamp / 1000)) event_timestamp
+            , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
+            , application.app_id application_id
+            , client.client_id endpoint_id
+            , client.cognito_id cognito_id
+            , session['session_id'] session_id
+            , from_unixtime(CAST(session['start_timestamp'] as BIGINT) / 1000) session_start_time
+            , from_unixtime(CAST(session['stop_timestamp'] as BIGINT) / 1000) session_stop_time
+            , ingest_timestamp
+            FROM
+            all_events
+            WHERE (event_type NOT LIKE '_email.%' and event_type NOT LIKE '_SMS.%' and event_type NOT LIKE  '_campaign.%' and event_type NOT LIKE '_test.event%' and event_type NOT LIKE '_journey.%')
+            
+            
+  ##Function invocation to execute the quries
+  SetupSampleFiles:
+    Type: Custom::LoadLambda
+    Properties:
+      ServiceToken: !GetAtt CustomResourceHelper.Arn
+      CustomResourceAction: SetupSampleFiles
+   
+  CustomResourceHelper:
+    Type: AWS::Lambda::Function
+    Properties:
+      Environment:
+        Variables:
+          LOG_LEVEL: "DEBUG"
+          S3_DATA_BUCKET: !Ref S3DataLogBucket
+          #EXISTING_CS: !Ref ConfigurationSetNames
+          #ALL_EVENT_TABLE: !Ref EventTableAllNamedQuery
+          #SMS_ALL_EVENTS: !Ref EventTableSMSBufferedNamedQuery
+          EMAIL_ALL_EVENTS: !Ref EventTableAllEmailNamedQuery
+          JOURNEY_ALL_EVENTS: !Ref EventTableJourneyNamedQuery
+          SMS_ALL_EVENTS: !Ref EventTableAllSMSNamedQuery
+          CAMPAIGN_ALL_EVENTS: !Ref EventTableAllCampaignNamedQuery
+          CUSTOM_ALL_EVENTS: !Ref EventTableAllCustomNamedQuery
+          
+      Description: Helps set up the solution.
+      MemorySize: 256
+      Role: !GetAtt CustomResourceHelperRole.Arn
+      Timeout: 300
+      Handler: handler.lambda_handler
+      Runtime: !FindInMap ["LambdaRuntime", "Language", "Python"]
+      Code:
+          S3Bucket: !Ref LambdaCodeBucketName
+          S3Key: "custom-view-builder.zip"  
+     # Code:
+     #   S3Bucket: !Join ["-", [!FindInMap ["SourceCode", "General", "S3Bucket"], Ref: "AWS::Region" ]]
+     #   S3Key: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "custom-view-builder.zip"]]
+
+
+  CustomResourceHelperRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        -
+          PolicyName: "root"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+
+  CustomResourceHelperPolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        Roles:
+          - !Ref CustomResourceHelperRole
+        PolicyName: CustomResourceHelperPolicy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+             -
+              Effect: Allow
+              Action:
+                - "s3:GetBucketLocation"
+                - "s3:GetObject"
+                - "s3:ListBucket"
+                - "s3:ListBucketMultipartUploads"
+                - "s3:ListMultipartUploadParts"
+                - "s3:AbortMultipartUpload"
+                - "s3:CreateBucket"
+                - "s3:PutObject"
+              Resource:
+                - !Sub "arn:aws:s3:::${S3DataLogBucket}"
+                - !Sub "arn:aws:s3:::${S3DataLogBucket}*"
+             -
+              Effect: "Allow"
+              Action:
+                - "athena:*"
+              Resource: !Sub "arn:aws:athena:${AWS::Region}:${AWS::AccountId}:workgroup/*"
+             -
+              Effect: "Allow"
+              Action:
+                - "glue:GetDatabase"
+                - "glue:GetDatabases"
+                - "glue:GetTable"
+                - "glue:GetTables"
+                - "glue:GetPartition"
+                - "glue:GetPartitions"
+                - "glue:CreateTable"
+              Resource:
+                - !Sub "arn:aws:glue:${AWS::Region}:${AWS::AccountId}:table/${EventAthenaDatabaseName}/*"
+                - !Sub "arn:aws:glue:${AWS::Region}:${AWS::AccountId}:database/${EventAthenaDatabaseName}"
+                - !Sub "arn:aws:glue:${AWS::Region}:${AWS::AccountId}:catalog"
+             -
+              Effect: "Allow"
+              Action:
+                - "logs:CreateLogGroup"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+              Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"

@@ -1,11 +1,11 @@
 # Event Dashboard solution on quicksight dashboard file
 #
-# template for Event Dashboard solution on quicksight dashboard. 
+# template for Event Dashboard solution with quicksight dashboard. 
 # **DO NOT DELETE**
 #
 # author: satyaso@
 AWSTemplateFormatVersion: 2010-09-09
-Description: (V-01) - Event dashboard solution on the event database 
+Description: (V-01) - Event dashboard solution implementation on event database 
 
 Parameters:
   EventAthenaDatabaseName:
@@ -46,7 +46,7 @@ Resources:
       QueryString:
         !Sub
           |
-            CREATE OR REPLACE VIEW email_events_draft_v1 AS
+            CREATE OR REPLACE VIEW email_all_events_draft_v1 AS
             SELECT
               event_type
               , from_unixtime((event_timestamp / 1000)) event_timestamp
@@ -65,7 +65,7 @@ Resources:
               , ingest_timestamp
             FROM
               all_events
-             WHERE (event_type NOT LIKE '_email.%') 
+             WHERE (event_type LIKE '_email.%') 
 
 
   EventTableAllSMSNamedQuery:
@@ -114,7 +114,7 @@ Resources:
           |
             CREATE OR REPLACE VIEW campaign_events_draft_v1 AS
             SELECT
-            event_type
+              event_type
             , from_unixtime((event_timestamp / 1000)) event_timestamp
             , from_unixtime((arrival_timestamp / 1000)) arrival_timestamp
             , application.app_id application_id
@@ -122,11 +122,12 @@ Resources:
             , attributes['campaign_id'] pinpoint_campaign_id
             , attributes['treament_id'] pinpoint_treatment_id
             , awsaccountid aws_account_id
-            , attributes as message_tags
+            , attributes['delivery_type'] delivery_type
+            , attributes['campaign_send_status'] campaign_send_status
             , ingest_timestamp
             FROM
               all_events
-            WHERE (event_type = '_campaign.%')
+            WHERE (event_type like '_campaign.%')
 
   EventTableJourneyNamedQuery:
     Type: AWS::Athena::NamedQuery
@@ -149,11 +150,14 @@ Resources:
             , attributes['journey_id'] journey_id
             , attributes['journey_activity_id'] journey_activity_id
             , awsaccountid aws_account_id
-            , MAP_CONCAT(COALESCE(client_context.custom, CAST(JSON '{}' AS MAP(varchar,varchar))),  attributes) as message_tags
+            , typeof(client_context.custom['endpoint']) as custom
+            , json_extract_scalar(client_context.custom['endpoint'], '$.EndpointStatus') as end_point_status
+            , json_extract_scalar(client_context.custom['endpoint'], '$.ChannelType') as channel_type
+            , json_extract_scalar(client_context.custom['endpoint'], '$.User.UserId') as user_id
             , ingest_timestamp
             FROM
               all_events
-            WHERE (event_type = '_journey.%')  
+            WHERE (event_type like '_journey.%')  
             
   
   EventTableAllCustomNamedQuery:

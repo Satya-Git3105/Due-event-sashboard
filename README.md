@@ -19,17 +19,19 @@ User segmentation based on: 
 • Data/business process mining 
 • User engagement benchmarking and funneling
 
-Step 1 – Create AWS account & Pinpoint Project
+#### Step 1 – Create AWS account & Pinpoint Project
+
 Create an AWS account
 Implement [Event database solution](https://aws.amazon.com/solutions/implementations/digital-user-engagement-events-database/) 
 Copy and save the 1/DUE database name 2/S3 Bucket name from DUE event database solution, this will be needed as input parameters in 
 
-Step 2 – Create S3 bucket for Lambda code and upload the Zip file 
+#### Step 2 – Create S3 bucket for Lambda code and upload the Zip file 
+
 1.	This step explains on how to deploy the code ZIP file 
 2.	Create an S3 bucket in the region that you have your Pinpoint projects and provide it a unique name
     2.1.	Upload the zip file into the root folder: lambda_view_creator.zip. Install the cloud formation stack template within the same region as that of your DUE database is. Provide following details as input parameter to cloud formation stack and proceed with the installation. Zip Code package
 
-Step 3 – Deploy Cloudformation template
+#### Step 3 – Deploy Cloudformation template
 
 1.	This step creates several new amazon Athena views that’s to be act as a data source for Amazon Quicksight. Dashboard 
 2.	Navigate to Cloud formation page in AWS console, click up right on “Create stack” and select the option “With new resources (standard)”
@@ -48,7 +50,7 @@ Step 3 – Deploy Cloudformation template
 #### AWS CloudFormation Link
 [CF Template](Event-dashboard.template)
 
-Step 4 – Create Amazon Quicksight engagement Dashboards
+#### Step 4 – Create Amazon Quicksight engagement Dashboards
 
 - This is a step by step blog on how to integrate the newly created Athena views with Amazon Quicksight
-Please Refer - https://github.com/Satya-Git3105/Due-events-dashboard/blob/main/Pinpoint-Event-dashboard.docx 
+#### Please Refer - https://github.com/Satya-Git3105/Due-events-dashboard/blob/main/Pinpoint-Event-dashboard.docx 

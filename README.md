@@ -3,21 +3,21 @@
 ![Screenshot](images/DUE-engageEvents-dashboard.png)
 
 
-Create Quicksight dashboard from Pinpoint/SES events
+#### Create Quicksight dashboard from Pinpoint/SES events
 
-Solution
+#### Solution
 This solution enhances the DUE events database solution by allowing all events retrieved using Amazon Athena to be shown in Amazon Quicksight as engagement events. In chronological order, this solution can be accomplished in three steps.
 1. Create a database solution for events.
 2. Install the CloudFormation template for Athena View.
 3. Set up Amazon Quicksight to dashboard engagement event analytics and event dashboard by following the steps in the blog.
 
-Use case(s)
+#### Use case(s)
 User segmentation based on: 
-• A deep dive into event insights 
-• User segmentation based on: (for example, SMS, Email, Campaign, and Journey events)
-• An individual user's engagement event dashboard.
-• Data/business process mining 
-• User engagement benchmarking and funneling
+* A deep dive into event insights 
+* User segmentation based on: (for example, SMS, Email, Campaign, and Journey events)
+* An individual user's engagement event dashboard.
+* Data/business process mining 
+* User engagement benchmarking and funneling
 
 #### Step 1 – Create AWS account & Pinpoint Project
 

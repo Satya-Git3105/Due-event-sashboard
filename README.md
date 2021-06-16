@@ -29,7 +29,7 @@ Copy and save the 1/DUE database name 2/S3 Bucket name from DUE event database s
 
 1.	This step explains on how to deploy the code ZIP file 
 2.	Create an S3 bucket in the region that you have your Pinpoint projects and provide it a unique name
-    2.1.	Upload the zip file into the root folder: lambda_view_creator.zip. Install the cloud formation stack template within the same region as that of your DUE database is. Provide following details as input parameter to cloud formation stack and proceed with the installation. Zip Code package
+    * Upload the zip file into the root folder: lambda_view_creator.zip. Install the cloud formation stack template within the same region as that of your DUE database is. Provide following details as input parameter to cloud formation stack and proceed with the installation. Zip Code package
 
 #### Step 3 – Deploy Cloudformation template
 

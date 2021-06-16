@@ -53,4 +53,4 @@ Copy and save the 1/DUE database name 2/S3 Bucket name from DUE event database s
 #### Step 4 – Create Amazon Quicksight engagement Dashboards
 
 - This is a step by step blog on how to integrate the newly created Athena views with Amazon Quicksight
-#### Please Refer - https://github.com/Satya-Git3105/Due-events-dashboard/blob/main/Pinpoint-Event-dashboard.docx 
+#### Please Refer - [blog](Pinpoint-Event-dashboard.docx)

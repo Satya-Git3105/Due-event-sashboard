@@ -59,7 +59,7 @@ Resources:
               , facets.email_channel.mail_event.mail.message_id message_id
               , from_unixtime((facets.email_channel.mail_event.mail.message_send_timestamp / 1000)) message_send_timestamp
               , facets.email_channel.mail_event.mail.from_address from_address
-              , facets.email_channel.mail_event.mail.destination destination
+              , element_at(facets.email_channel.mail_event.mail.destination, 1) destination
               , facets.email_channel.mail_event.mail.common_headers.subject as subject
               , MAP_CONCAT(COALESCE(client_context.custom, CAST(JSON '{}' AS MAP(varchar,varchar))),  attributes) as message_tags
               , ingest_timestamp
